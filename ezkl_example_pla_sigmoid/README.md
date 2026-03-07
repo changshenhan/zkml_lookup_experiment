@@ -1,5 +1,7 @@
 # PLA Sigmoid: Replace Lookup with Piecewise Linear (Copy/Arithmetic Constraints)
 
+Part of the [zkml_lookup_experiment](https://github.com/changshenhan/zkml_lookup_experiment) comparison (PLA vs ezkl built-in Sigmoid lookup).
+
 This example shows how to **avoid Sigmoid lookup tables** in ezkl by using a **piecewise linear approximation (PLA)** that uses only multiplications, additions, and comparisons. The circuit then relies on **copy and arithmetic constraints** instead of lookups, which can reduce proof cost and simplify settings.
 
 ## Why this helps

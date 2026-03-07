@@ -1,72 +1,107 @@
-# zkML Lookup vs PLA 实验
+# zkML: Sigmoid Lookup vs PLA Comparison
 
-本仓库对比在 [ezkl](https://github.com/zkonduit/ezkl) 中实现 Sigmoid 的两种方式：**ezkl 原版 Sigmoid 查表** 与 **PLA（分段线性近似，无 Lookup）**，并给出电路参数、证明时间与精度对比。
+This repository compares two ways to implement **Sigmoid** in [ezkl](https://github.com/zkonduit/ezkl) (zero-knowledge ML):
 
-- **作者 / Author**: [changshenhan](https://github.com/changshenhan)
+1. **ezkl built-in Sigmoid lookup** — one `nn.Sigmoid()` in ONNX; the circuit uses ezkl’s internal lookup table.
+2. **PLA (piecewise linear approximation)** — Sigmoid is replaced by piecewise linear segments (mul/add/compare only); no lookup in the circuit.
 
----
-
-## 方案简述
-
-| 方案 | 说明 |
-|------|------|
-| **ezkl 原版 Sigmoid 查表** | ONNX 使用 `nn.Sigmoid()`，电路里由 ezkl 内置 lookup 表实现（查表约束）。 |
-| **PLA** | ONNX 使用多段线性近似替代 Sigmoid，电路里仅乘加/比较，无 lookup（见子目录 `ezkl_example_pla_sigmoid`）。 |
+**Author:** [changshenhan](https://github.com/changshenhan)
 
 ---
 
-## 对比数据概览
+## What’s in this repo
 
-详细数据见 **[COMPARISON.md](./COMPARISON.md)**，包含：
-
-- **电路参数**：logrows、num_rows、total_assignments、required_lookups、pk/vk/proof 大小等  
-- **证明时间与内存**：单次 prove 耗时、峰值内存（RSS）  
-- **证明精度**：查表方案为定点量化误差；PLA 为约 0.5% 相对误差（≥99.5% 精度）
-
-简要结论（基于当前实测）：
-
-- **证明时间**：PLA 更快（约 4.7 s vs 查表约 9.3 s）。  
-- **电路行数**：查表方案更少（约 4k vs PLA 约 11 万行）。  
-- **精度**：查表方案更接近标准 Sigmoid；PLA 有约 0.5% 近似误差。
+| Item | Description |
+|------|-------------|
+| **Lookup approach** | `gen.py`, `run_ezkl_full.py`, `build_lookup_table.py`, `eval_metrics.py` — export ONNX with a single Sigmoid and run the full ezkl pipeline with lookup. |
+| **PLA approach** | `ezkl_example_pla_sigmoid/` — PLA Sigmoid (no lookup); see that folder’s README. |
+| **Comparison** | `compare_with_pla.py` prints a side-by-side comparison. Pre-computed metrics: `metrics_ours.json` (lookup) and `ezkl_example_pla_sigmoid/metrics_pla.json` (PLA). |
 
 ---
 
-## 目录结构
+## Comparison summary
+
+(Data from one machine; run `eval_metrics.py` and `ezkl_example_pla_sigmoid/run_metrics.py` to regenerate.)
+
+| Metric | ezkl Sigmoid lookup | PLA (no lookup) |
+|--------|---------------------|------------------|
+| **Circuit rows (`num_rows`)** | ~4.4k | ~113k |
+| **Lookups** | Sigmoid table | None |
+| **Prove time** | ~9.3 s | ~4.7 s |
+| **Peak memory** | ~1.7 GB | ~1.2 GB |
+| **Accuracy vs true Sigmoid** | Quantization only (~1/128) | ~0.5% relative error (≥99.5% over range) |
+
+- **Lookup**: smaller circuit, no PLA approximation error, but longer prove time and higher memory in this setup (larger `logrows`).
+- **PLA**: faster prove and less memory here, with a small approximation error.
+
+See **[COMPARISON.md](./COMPARISON.md)** for full tables (params, file sizes, accuracy).
+
+---
+
+## Repo layout
 
 ```
 .
-├── README.md              # 本说明
-├── COMPARISON.md          # PLA vs ezkl 原版 Sigmoid 查表 完整对比
-├── run_ezkl_full.py       # 查表方案：完整 ezkl 流程
-├── gen.py                 # 查表方案：导出 ONNX（单 Sigmoid）
-├── eval_metrics.py        # 查表方案：收集指标，生成 metrics_ours.json
-├── compare_with_pla.py    # 读取两边 metrics，打印对比
-├── build_lookup_table.py  # 生成 lookup_table.json（供 lookup_range 等使用）
-├── DESIGN.md              # 分段查表 + 线性插值设计说明
-├── ezkl_example_pla_sigmoid/   # PLA 示例（无 Lookup）
-│   ├── README.md
-│   ├── gen.py
-│   ├── pwl_sigmoid.py
-│   └── run_metrics.py     # 生成 metrics_pla.json
-├── metrics_ours.json      # 查表方案指标（运行 eval_metrics.py 生成）
-└── ezkl_example_pla_sigmoid/metrics_pla.json  # PLA 方案指标
+├── README.md                 # This file
+├── COMPARISON.md             # Detailed comparison (params, time, accuracy)
+├── .gitignore
+├── gen.py                    # Export ONNX (single Sigmoid) for lookup approach
+├── run_ezkl_full.py          # Full ezkl pipeline for lookup approach
+├── build_lookup_table.py     # Build lookup_table.json (for lookup_range)
+├── eval_metrics.py           # Collect metrics → metrics_ours.json
+├── compare_with_pla.py       # Print comparison from metrics_ours.json vs metrics_pla.json
+├── metrics_ours.json         # Saved metrics for lookup approach
+└── ezkl_example_pla_sigmoid/
+    ├── README.md
+    ├── gen.py                # Export ONNX with PLA Sigmoid
+    ├── pwl_sigmoid.py        # PLA Sigmoid module
+    ├── run_metrics.py        # Collect metrics → metrics_pla.json
+    └── metrics_pla.json      # Saved metrics for PLA approach
 ```
+
+Generated files (not committed): `network.onnx`, `input.json`, `settings.json`, `lookup_table.json`, `data.json`, `pk.key`, `vk.key`, `*.srs`, `witness.json`, `proof*.json`, `network.compiled`, etc. See `.gitignore`.
 
 ---
 
-## 如何复现
+## How to run
 
-1. **环境**：安装 ezkl、PyTorch 等（见 ezkl 官方文档）。
-2. **查表方案**：  
-   `python gen.py` → `python run_ezkl_full.py` → `python eval_metrics.py`  
-   得到 `metrics_ours.json`。
-3. **PLA 方案**：  
-   进入 `ezkl_example_pla_sigmoid`，按其中 README 跑完 ezkl 流程，再执行 `python run_metrics.py`  
-   得到 `metrics_pla.json`。
-4. **打印对比**：在项目根目录执行 `python compare_with_pla.py`。
+**Requirements:** Python 3, [ezkl](https://github.com/zkonduit/ezkl), PyTorch (for `gen.py`).
+
+### Lookup approach
+
+```bash
+# 1. Build lookup table (requires data.json with "input_data": list of float arrays for input range)
+python build_lookup_table.py
+
+# 2. Export ONNX and input
+python gen.py
+
+# 3. Run full ezkl pipeline (settings, compile, witness, setup, prove, verify)
+python run_ezkl_full.py
+
+# 4. Collect metrics (optional; overwrites metrics_ours.json)
+python eval_metrics.py
+```
+
+### PLA approach
+
+```bash
+cd ezkl_example_pla_sigmoid
+python gen.py
+# Then run ezkl: gen_settings, compile_circuit, gen_witness, gen_srs, setup, prove, verify
+python run_metrics.py   # writes metrics_pla.json
+```
+
+### Print comparison
+
+From the repo root (after both `metrics_ours.json` and `ezkl_example_pla_sigmoid/metrics_pla.json` exist):
+
+```bash
+python compare_with_pla.py
+```
 
 ---
 
 ## License
 
-与 ezkl 及本仓库内引用示例保持一致；PLA 示例见 `ezkl_example_pla_sigmoid/README.md`。
+Use and attribution consistent with ezkl and the PLA example in `ezkl_example_pla_sigmoid/`.

@@ -1,4 +1,4 @@
-# 大文件与可再生成产物（避免仓库过大）
+# Generated / large artifacts (do not commit)
 pk.key
 vk.key
 *.srs
@@ -7,6 +7,14 @@ witness.json
 proof.json
 proof_eval.json
 proof_metrics.json
+network.onnx
+input.json
+settings.json
+lookup_table.json
+data.json
+pwl_params.npz
+paper.pdf
+
 ezkl_example_pla_sigmoid/pk.key
 ezkl_example_pla_sigmoid/vk.key
 ezkl_example_pla_sigmoid/*.srs
@@ -14,6 +22,10 @@ ezkl_example_pla_sigmoid/network.compiled
 ezkl_example_pla_sigmoid/witness.json
 ezkl_example_pla_sigmoid/proof.json
 ezkl_example_pla_sigmoid/proof_metrics.json
+ezkl_example_pla_sigmoid/network.onnx
+ezkl_example_pla_sigmoid/input.json
+ezkl_example_pla_sigmoid/settings.json
+ezkl_example_pla_sigmoid/pwl_params.npz
 
 # Python
 __pycache__/
@@ -24,18 +36,11 @@ dist/
 build/
 *.egg
 
-# 本地/IDE
+# Local / IDE
 .venv/
 venv/
 .env
 .DS_Store
 *.swp
-*.swo
 .idea/
 .vscode/
-
-# 可选：若不想提交 ONNX/input/表数据，可取消注释
-# network.onnx
-# input.json
-# lookup_table.json
-# data.json
