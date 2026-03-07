@@ -1,0 +1,27 @@
+{
+  "project": "zkml_lookup_experiment",
+  "circuit": {
+    "logrows": 17,
+    "num_rows": 4385,
+    "total_assignments": 8770,
+    "required_lookups": [
+      {
+        "Sigmoid": {
+          "scale": 128.0
+        }
+      }
+    ]
+  },
+  "file_sizes_bytes": {
+    "network.onnx": 1300,
+    "network.compiled": 7141,
+    "input.json": 2595,
+    "witness.json": 18465,
+    "settings.json": 2301,
+    "pk.key": 1208782843,
+    "vk.key": 822151,
+    "proof_eval.json": 52562
+  },
+  "prove_time_sec": 9.314,
+  "peak_memory_kb": 1779744.0
+}

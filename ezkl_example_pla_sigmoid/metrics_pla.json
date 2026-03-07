@@ -1,0 +1,21 @@
+{
+  "project": "ezkl_example_pla_sigmoid",
+  "circuit": {
+    "logrows": 16,
+    "num_rows": 112661,
+    "total_assignments": 112661,
+    "required_lookups": []
+  },
+  "file_sizes_bytes": {
+    "network.onnx": 14492,
+    "network.compiled": 35893,
+    "witness.json": 18430,
+    "settings.json": 5407,
+    "pk.key": 516337043,
+    "vk.key": 436679,
+    "proof.json": 46478,
+    "proof_metrics.json": 46472
+  },
+  "prove_time_sec": 4.691,
+  "peak_memory_kb": 1249520.0
+}

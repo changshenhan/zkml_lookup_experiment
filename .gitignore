@@ -1,0 +1,41 @@
+# 大文件与可再生成产物（避免仓库过大）
+pk.key
+vk.key
+*.srs
+network.compiled
+witness.json
+proof.json
+proof_eval.json
+proof_metrics.json
+ezkl_example_pla_sigmoid/pk.key
+ezkl_example_pla_sigmoid/vk.key
+ezkl_example_pla_sigmoid/*.srs
+ezkl_example_pla_sigmoid/network.compiled
+ezkl_example_pla_sigmoid/witness.json
+ezkl_example_pla_sigmoid/proof.json
+ezkl_example_pla_sigmoid/proof_metrics.json
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+dist/
+build/
+*.egg
+
+# 本地/IDE
+.venv/
+venv/
+.env
+.DS_Store
+*.swp
+*.swo
+.idea/
+.vscode/
+
+# 可选：若不想提交 ONNX/input/表数据，可取消注释
+# network.onnx
+# input.json
+# lookup_table.json
+# data.json
