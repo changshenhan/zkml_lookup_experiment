@@ -26,10 +26,12 @@ def load_input_range(path: str = "data.json") -> Tuple[float, float, np.ndarray]
     从 data.json 里读取所有 input_data，返回：
     - xmin, xmax: 实际出现过的最小/最大输入
     - all_x: 所有扁平化后的输入样本（np.array），用于非均匀采样
+    若 data.json 不存在，则使用默认范围 [-2, 2] 与 200 个均匀点。
     """
     p = Path(path)
     if not p.exists():
-        raise FileNotFoundError(f"找不到输入数据文件 {path}")
+        all_x = np.linspace(-2.0, 2.0, 200)
+        return -2.0, 2.0, all_x
 
     data = json.loads(p.read_text())
     all_in: List[float] = [v for arr in data.get("input_data", []) for v in arr]
@@ -167,7 +169,7 @@ def quantize_to_field(
 
 
 def main():
-    # 1. 读取输入范围与真实分布（来自 data.json）
+    # 1. 读取输入范围与真实分布（来自 data.json；若无则用默认 [-2, 2]）
     xmin, xmax, all_x = load_input_range("data.json")
     print(f"检测到输入范围: [{xmin:.8f}, {xmax:.8f}]，样本数={all_x.shape[0]}")
 
@@ -194,7 +196,7 @@ def main():
     max_abs_err = float(np.max(np.abs(true_mid - approx_mid)))
     print(f"在每个区间中点处的最大 |σ(x) - kx - b| ≈ {max_abs_err:.6e}")
 
-    # 7. 写出查找表
+    # 7. 写出查找表（含 ezkl Custom Lookup 所需格式）
     out = {
         "scale": int(S),
         "scale_bits": scale_bits,
@@ -207,6 +209,25 @@ def main():
     }
     Path("lookup_table.json").write_text(json.dumps(out, indent=2))
     print("✅ 已生成 lookup_table.json （含浮点与整数形式的 (x_i, k_i, b_i)）")
+
+    # 8. 写出 ezkl Custom Lookup 使用的 PWL JSON（breakpoints/slopes/intercepts）
+    pwl_params = {
+        "breakpoints": xs.tolist(),
+        "slopes": ks.tolist(),
+        "intercepts": bs.tolist(),
+    }
+    Path("pwl_params.json").write_text(json.dumps(pwl_params, indent=2))
+    print("✅ 已生成 pwl_params.json （ezkl custom_lookup_path 用）")
+
+    # 9. 同时写出 64 段版本，避免 gen_settings 因段数过多卡住（可选使用 pwl_params_64.json）
+    xs64, sl64, ic64 = load_pwl_64_from_lookup_table("lookup_table.json")
+    pwl_params_64 = {
+        "breakpoints": xs64.tolist(),
+        "slopes": sl64.tolist(),
+        "intercepts": ic64.tolist(),
+    }
+    Path("pwl_params_64.json").write_text(json.dumps(pwl_params_64, indent=2))
+    print("✅ 已生成 pwl_params_64.json （64 段，若 gen_settings 卡住可改用此文件）")
 
 
 if __name__ == "__main__":

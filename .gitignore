@@ -13,6 +13,8 @@ settings.json
 lookup_table.json
 data.json
 pwl_params.npz
+pwl_params.json
+pwl_params_64.json
 paper.pdf
 
 ezkl_example_pla_sigmoid/pk.key
